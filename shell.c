@@ -1,69 +1,86 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/wait.h>
-
-extern char **environ;
+#include "main.h"
 
 /**
- * main - simple UNIX command line interpreter
- *
- * Return: Always 0.
- */
-int main(void)
-{
-	char *line = NULL;
-	size_t bufsize = 0;
-	ssize_t nread;
-	pid_t pid;
-	int status;
+ * main - execute a simple shell
+ * @argc: a count of argumentos on argv
+ * @argv: vector of arguments given to shell
+ * Return: 0 on success and stat on exit
+*/
 
-	while (1)
-	{
-		printf("#cisfun$ ");
-		nread = getline(&line, &bufsize, stdin);
-		if (nread == -1) /* EOF or read error */
-		{
+int main(__attribute__((unused)) int argc, char *argv[])
+{	int count = 1, status = 1, free_;
+	ssize_t _exit_ = 0;
+	token_t *args_token = NULL, *path_token = NULL, *command = NULL;
+	char *line = NULL, **array = NULL;
+
+	while (status >= 0)
+	{	free_ = 0;
+		line = Read_line(&_exit_);
+		if (strcmp(line, "env\n") == 0)
+		{	_env();
 			free(line);
-			printf("\n");
-			exit(EXIT_SUCCESS);
-		}
-
-		/* Remove trailing newline */
-		if (line[nread - 1] == '\n')
-			line[nread - 1] = '\0';
-
-		if (line[0] == '\0') /* empty command, just prompt again */
-			continue;
-
-		pid = fork();
-		if (pid == -1)
-		{
-			perror("fork");
+			continue; }
+		args_token = tokenicer(line, " \t\r\n\a");
+		if (!args_token)
+		{	free(line);
+			continue; }
+		path_token = _getenv("PATH=");
+		command = _stat_checker(args_token, path_token);
+		if (!command)
+		{	_exit_ = 1;
+			fprintf(stderr, "%s: %d: %s: not found\n", argv[0], count, line);
 			free(line);
-			exit(EXIT_FAILURE);
-		}
-		if (pid == 0)
-		{
-			/* Child process */
-			char *argv[2];
-
-			argv[0] = line;
-			argv[1] = NULL;
-
-			execve(argv[0], argv, environ);
-			perror("./shell");
-			free(line);
-			exit(EXIT_FAILURE);
-		}
+			count++;
+			continue; }
 		else
+			_exit_ = 0;
+		array = _list_to_array(args_token);
+		status = _EXE_Cute(array);
+		if (status == 512)
+			_exit_ = 2;
+		while (array[free_])
 		{
-			/* Parent waits for child */
-			waitpid(pid, &status, 0);
+			free(array[free_]);
+			free_++;
 		}
-	}
+		free(array);
+		free(line);
+		count++; }
+	return (0); }
 
-	free(line);
-	return (0);
+/**
+ * Read_line - prints a prompt and read user input
+ * @_exit_: a count of argumentos on argv
+ * Return: 0 on success and stat on exit
+*/
+
+char *Read_line(ssize_t *_exit_)
+{
+	int num = 0;
+	char *str = NULL;
+	size_t size = 0;
+	int fd = isatty(num);
+
+	if (fd == 1)
+		printf("DEPS -> ");
+
+	if (getline(&str, &size, stdin) == -1)
+	{
+		free(str);
+		if (*_exit_ == 0)
+			exit(0);
+		else if (*_exit_ == 1)
+			exit(127);
+		exit(2);
+	}
+	else if (strcmp(str, "exit\n") == 0)
+	{
+		free(str);
+		if (*_exit_ == 0)
+			exit(0);
+		else if (*_exit_ == 1)
+			exit(127);
+		exit(2);
+	}
+	return (str);
 }
