@@ -1,45 +1,38 @@
 #include "shell.h"
 
+/**
+ * main - Entry point of the shell
+ *
+ * Return: 0 on success
+ */
 int main(void)
 {
-    char *line = NULL;
-    size_t len = 0;
-    ssize_t read;
-    char *argv[2];
+	char *line;
+	char **args;
+	int status = 1;
 
-    while (1)
-    {
-        write(STDOUT_FILENO, "$ ", 2);
-        read = getline(&line, &len, stdin);
-        if (read == -1)
-            break;
+	while (status)
+	{
+		if (isatty(STDIN_FILENO))
+			prompt();
 
-        line[read - 1] = '\0';
-        argv[0] = line;
-        argv[1] = NULL;
+		line = read_line();
+		if (line == NULL)
+		{
+			free(line);
+			break;
+		}
+		args = split_line(line);
+		if (args == NULL)
+		{
+			free(line);
+			continue;
+		}
+		status = execute(args);
 
-        if (access(argv[0], X_OK) == 0)
-        {
-            if (fork() == 0)
-                execve(argv[0], argv, environ);
-            else
-                wait(NULL);
-        }
-        else
-        {
-            char *cmd_path = get_cmd_path(argv[0]);
-            if (cmd_path)
-            {
-                if (fork() == 0)
-                    execve(cmd_path, argv, environ);
-                else
-                    wait(NULL);
-                free(cmd_path);
-            }
-            else
-                write(STDERR_FILENO, "Command not found\n", 19);
-        }
-    }
-    free(line);
-    return (0);
+		free(line);
+		free(args);
+	}
+
+	return (0);
 }
