@@ -4,10 +4,12 @@
 #include <string.h>
 #include <sys/wait.h>
 
+extern char **environ;
+
 /**
- * main - Entry point of the simple shell program
+ * main - simple UNIX command line interpreter
  *
- * Return: Always 0 on success
+ * Return: Always 0.
  */
 int main(void)
 {
@@ -19,15 +21,21 @@ int main(void)
 
 	while (1)
 	{
-		printf("$ ");
+		printf("#cisfun$ ");
 		nread = getline(&line, &bufsize, stdin);
-		if (nread == -1) /* EOF or error */
+		if (nread == -1) /* EOF or read error */
 		{
 			free(line);
 			printf("\n");
 			exit(EXIT_SUCCESS);
 		}
-		line[nread - 1] = '\0'; /* Remove trailing newline */
+
+		/* Remove trailing newline */
+		if (line[nread - 1] == '\n')
+			line[nread - 1] = '\0';
+
+		if (line[0] == '\0') /* empty command, just prompt again */
+			continue;
 
 		pid = fork();
 		if (pid == -1)
@@ -40,20 +48,22 @@ int main(void)
 		{
 			/* Child process */
 			char *argv[2];
+
 			argv[0] = line;
 			argv[1] = NULL;
 
-			execvp(argv[0], argv);
-			perror("execvp");
+			execve(argv[0], argv, environ);
+			perror("./shell");
 			free(line);
 			exit(EXIT_FAILURE);
 		}
 		else
 		{
-			/* Parent process */
+			/* Parent waits for child */
 			waitpid(pid, &status, 0);
 		}
 	}
+
 	free(line);
 	return (0);
 }
