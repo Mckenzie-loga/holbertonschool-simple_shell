@@ -1,0 +1,69 @@
+
+---
+
+## ✅ `man_1_simple_shell`
+
+```man
+.TH SIMPLE_SHELL 1 "July 2025" "Holberton School" "User Commands"
+.SH NAME
+simple_shell \- simple Unix shell interpreter
+
+.SH SYNOPSIS
+.B ./hsh
+.RI [command ...]
+
+.SH DESCRIPTION
+.B simple_shell
+is a basic Unix shell that reads user input, parses it, and executes commands.
+It supports both interactive and non-interactive modes.
+
+.SH FEATURES
+.TP
+* Executes commands with arguments
+.TP
+* Supports built-in commands: 
+.B exit
+and 
+.B env
+.TP
+* Handles command path resolution via the PATH environment variable
+
+.SH USAGE
+.TP
+Interactive mode:
+.B ./hsh
+.br
+Then enter commands as you would in a normal shell.
+
+.TP
+Non-interactive mode:
+.B echo "ls -l" | ./hsh
+
+.SH BUILT-IN COMMANDS
+.TP
+.B exit
+Exit the shell.
+
+.TP
+.B env
+Print the current environment variables.
+
+.SH FILES
+.TP
+.B main.c
+Entry point for the shell
+.TP
+.B shell.c
+Shell execution loop and logic
+.TP
+.B path.c
+Functions for PATH resolution
+
+.SH AUTHORS
+See the 
+.B AUTHORS
+file in the root of the repository.
+
+.SH SEE ALSO
+sh(1), bash(1)
+
